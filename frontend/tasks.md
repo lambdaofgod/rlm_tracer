@@ -2,35 +2,35 @@
 
 ## Phase 1: Scaffolding
 
-- [ ] 1.1 Move `app/` to `src/app/`, update tsconfig `@/*` -> `./src/*`, install all deps, create `components.json`
-- [ ] 1.2 TEST: `bun run build` passes with the restructured project
+- [x] 1.1 Move `app/` to `src/app/`, update tsconfig `@/*` -> `./src/*`, install all deps, create `components.json`
+- [x] 1.2 TEST: `bun run build` passes with the restructured project
 
 ## Phase 2: Data layer
 
-- [ ] 2.1 `src/lib/utils.ts` (cn function), `src/lib/types.ts` (all interfaces)
-- [ ] 2.2 `src/lib/parse-logs.ts` -- real JSONL parser with metadata extraction
-- [ ] 2.3 Create a sample `.jsonl` fixture file for testing (`src/lib/__tests__/fixture.jsonl`)
-- [ ] 2.4 TEST (`bun test`): unit tests for `parseLogFile` -- parses fixture, correct iteration count, metadata, config extraction, handles malformed input (`src/lib/__tests__/parse-logs.test.ts`)
+- [x] 2.1 `src/lib/utils.ts` (cn function), `src/lib/types.ts` (all interfaces)
+- [x] 2.2 `src/lib/parse-logs.ts` -- real JSONL parser with metadata extraction
+- [x] 2.3 Create a sample `.jsonl` fixture file for testing (`src/lib/__tests__/fixture.jsonl`)
+- [x] 2.4 TEST (`bun test`): unit tests for `parseLogFile` -- parses fixture, correct iteration count, metadata, config extraction, handles malformed input (`src/lib/__tests__/parse-logs.test.ts`)
 
 ## Phase 3: UI primitives
 
-- [ ] 3.1 All `src/components/ui/*` files (shadcn/ui wrappers: button, card, badge, tabs, collapsible, scroll-area, dropdown-menu, resizable, accordion, separator, tooltip)
-- [ ] 3.2 Theme: ThemeProvider, ThemeToggle, globals.css with OKLCH vars
-- [ ] 3.3 TEST: `bun run build` still passes with all primitives
+- [x] 3.1 All `src/components/ui/*` files (shadcn/ui wrappers: button, card, badge, tabs, collapsible, scroll-area, dropdown-menu, resizable, accordion, separator, tooltip)
+- [x] 3.2 Theme: ThemeProvider, ThemeToggle, globals.css with OKLCH vars
+- [x] 3.3 TEST: `bun run build` still passes with all primitives
 
 ## Phase 4: Core components (bare bones)
 
-- [ ] 4.1 Leaf components: SyntaxHighlight, CodeWithLineNumbers, StatsCard, AsciiGlobe (exports AsciiRLM)
-- [ ] 4.2 FileUploader (drag-and-drop, reads .jsonl via FileReader, calls onFileLoaded)
-- [ ] 4.3 CodeBlock (collapsible card: code, stdout, stderr, variables)
-- [ ] 4.4 ExecutionPanel (tabs: code execution + sub-LM calls, renders CodeBlock list)
-- [ ] 4.5 TrajectoryPanel (conversation messages list + final answer)
-- [ ] 4.6 IterationTimeline (scrollable card strip with selection callback)
-- [ ] 4.7 LogViewer (header, stats, timeline, resizable split panels, keyboard nav)
-- [ ] 4.8 Dashboard (upload area, loaded files list, renders LogViewer when log selected)
-- [ ] 4.9 Entry points: layout.tsx (fonts, providers), page.tsx (renders Dashboard)
-- [ ] 4.10 TEST: `bun run build` passes
-- [ ] 4.11 TEST (`bun test`): component smoke tests -- Dashboard renders, LogViewer renders with mock data, FileUploader triggers callback on file input (`src/components/__tests__/`)
+- [x] 4.1 Leaf components: SyntaxHighlight, CodeWithLineNumbers, StatsCard, AsciiGlobe (exports AsciiRLM)
+- [x] 4.2 FileUploader (drag-and-drop, reads .jsonl via FileReader, calls onFileLoaded)
+- [x] 4.3 CodeBlock (collapsible card: code, stdout, stderr, variables)
+- [x] 4.4 ExecutionPanel (tabs: code execution + sub-LM calls, renders CodeBlock list)
+- [x] 4.5 TrajectoryPanel (conversation messages list + final answer)
+- [x] 4.6 IterationTimeline (scrollable card strip with selection callback)
+- [x] 4.7 LogViewer (header, stats, timeline, resizable split panels, keyboard nav)
+- [x] 4.8 Dashboard (upload area, loaded files list, renders LogViewer when log selected)
+- [x] 4.9 Entry points: layout.tsx (fonts, providers), page.tsx (renders Dashboard)
+- [x] 4.10 TEST: `bun run build` passes
+- [x] 4.11 TEST (`bun test`): component smoke tests -- Dashboard renders, LogViewer renders with mock data, FileUploader triggers callback on file input (`src/components/__tests__/`)
 
 ## Phase 5: Integration test
 
