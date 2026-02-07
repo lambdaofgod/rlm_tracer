@@ -1,0 +1,27 @@
+ingestion:
+  sources:
+    - path: /data/logs
+      repository: jsonl
+      glob: "*.jsonl"
+  trigger:
+    mode: poll
+    poll_interval_seconds: 10
+    debounce_seconds: 2
+
+embedding:
+  url: http://text2vec:8080
+  dimension: 384
+  batch_size: 128
+  max_retries: 3
+
+projection:
+  refit_threshold: 2.0
+
+output:
+  parquet_path: /data/output/logs.parquet
+  embeddings_path: /data/output/embeddings.parquet
+  state_db_path: /data/output/state.db
+
+api:
+  host: 0.0.0.0
+  port: 8000
