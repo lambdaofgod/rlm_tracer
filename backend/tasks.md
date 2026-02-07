@@ -7,20 +7,20 @@
 - [x] Create `backend/config.yaml` with defaults from stack.md
 
 ## 2. Configuration
-- [ ] Create `config.py` with Pydantic models
-- [ ] `IngestionConfig`: list of `SourceConfig` (path, repository, glob) + `TriggerConfig` (mode, poll_interval, debounce)
-- [ ] `EmbeddingConfig`, `ProjectionConfig`, `OutputConfig`, `ApiConfig` unchanged
-- [ ] `load_config()` reads `config.yaml`
+- [x] Create `config.py` with Pydantic models
+- [x] `IngestionConfig`: list of `SourceConfig` (path, repository, glob) + `TriggerConfig` (mode, poll_interval, debounce)
+- [x] `EmbeddingConfig`, `ProjectionConfig`, `OutputConfig`, `ApiConfig` unchanged
+- [x] `load_config()` reads `config.yaml`
 
 ## 3. Record model
-- [ ] Create `models.py` with `Record` Pydantic model
-- [ ] Fields: id, timestamp, filename, text, iteration, idx_in_iteration, type
+- [x] Create `models.py` with `Record` Pydantic model
+- [x] Fields: id, timestamp, filename, text, iteration, idx_in_iteration, type
 
-## 4. LogRepository protocol
-- [ ] Create `repository.py` with `LogRepository` Protocol
-- [ ] `discover_unprocessed(processed: set[str]) -> list[str]`
-- [ ] `is_complete(source_id: str) -> bool`
-- [ ] `read(source_id: str) -> list[Record]`
+## 4. LogRepository abstract class
+- [x] Create `repository.py` with `LogRepository` ABC
+- [x] `discover_unprocessed(processed: set[str]) -> list[str]`
+- [x] `is_complete(source_id: str) -> bool`
+- [x] `read(source_id: str) -> list[Record]`
 
 ## 5. JSONL repository
 - [ ] Create `jsonl_repository.py` implementing `LogRepository`
