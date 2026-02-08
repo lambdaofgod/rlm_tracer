@@ -6,6 +6,13 @@
 - [x] Create package structure: `backend/src/pipeline/` with `__init__.py`
 - [x] Create `backend/config.yaml` with defaults from stack.md
 
+### 1.1 Dependency injection
+- [x] Create `StateStore` ABC in `state.py`
+- [x] Create `Embedder` ABC in `embedder.py`
+- [x] Create `OutputWriter` ABC in `output.py`
+- [x] Create `Trigger` ABC in `trigger.py`
+- [x] Create skeleton `main.py` as DI composition root (load config, construct concrete deps)
+
 ## 2. Configuration
 - [x] Create `config.py` with Pydantic models
 - [x] `IngestionConfig`: list of `SourceConfig` (path, repository, glob) + `TriggerConfig` (mode, poll_interval, debounce)
@@ -29,6 +36,7 @@
 - [x] `read`: parse all lines, extract text per entry type (see stack.md)
 - [x] ID generation: `sha256(filename:iteration:idx_in_iteration)`
 - [x] Skip and log unparseable lines
+- [ ] Create `FakeRepository` implementing `LogRepository` for tests
 
 ## 6. Set up linting and formatting
 - [x] Add `black` as a dev dependency
@@ -41,15 +49,18 @@
 - [x] Set up `pre-commit` with pyrefly + black hooks
 
 ## 7. State persistence (SQLite)
-- [ ] Create `state.py`
-- [ ] `processed_sources` table: track which sources have been processed
-- [ ] `pipeline_state` table: track `total_records`, `records_at_last_pca_fit`, `pca_fitted`
-- [ ] Methods: `is_processed()`, `mark_processed()`, `get_processed_set()`, `get_state()`, `set_state()`
-- [ ] Init DB and create tables on first run
+- [x] Create `state.py`
+- [x] `processed_sources` table: track which sources have been processed
+- [x] `pipeline_state` table: track `total_records`, `records_at_last_pca_fit`, `pca_fitted`
+- [x] Methods: `is_processed()`, `mark_processed()`, `get_processed_set()`, `get_state()`, `set_state()`
+- [x] Init DB and create tables on first run
+- [x] Rename `StateStore` to `SqliteStateStore`, make it inherit from `StateStore` ABC
+- [ ] Create `FakeStateStore` implementing `StateStore` for tests
 
 ## 8. Embedding client
-- [ ] Create `embedder.py`
-- [ ] `embed_batch(texts: list[str]) -> list[list[float]]`
+- [x] Create `Embedder` ABC in `embedder.py` with `embed_batch(texts: list[str]) -> list[list[float]]`
+- [ ] Create `HttpEmbedder` implementing `Embedder`
+- [ ] Create `FakeEmbedder` implementing `Embedder` for tests
 - [ ] POST to text2vec endpoint (see stack.md)
 - [ ] Batch by `config.embedding.batch_size`
 - [ ] Retry with exponential backoff up to `max_retries`
@@ -63,20 +74,26 @@
 - [ ] Auto-refit trigger: when `total_records >= records_at_last_pca_fit * refit_threshold`
 
 ## 10. Parquet output
-- [ ] Create `output.py`
-- [ ] `write_logs_parquet(records_with_projections, path)` - schema from spec 7.2
-- [ ] `write_embeddings_parquet(ids, vectors, path)` - schema from spec 7.3
+- [x] Create `OutputWriter` ABC in `output.py` with `write_logs` and `write_embeddings`
+- [ ] Create `ParquetOutputWriter` implementing `OutputWriter`
+- [ ] Create `FakeOutputWriter` implementing `OutputWriter` for tests
+- [ ] `write_logs(records_with_projections, path)` - schema from spec 7.2
+- [ ] `write_embeddings(ids, vectors, path)` - schema from spec 7.3
 - [ ] Atomic writes: write to temp file, then `os.rename()`
 - [ ] Merge with existing parquet data on append
 
 ## 11. Trigger (source discovery)
-- [ ] Create `trigger.py`
-- [ ] Poll mode: periodically call `repository.discover_unprocessed()` at configured interval
-- [ ] Watchdog mode: use `watchdog` to monitor source paths, debounce, then call `discover_unprocessed()`
+- [x] Create `Trigger` ABC in `trigger.py` with `start()` and `stop()`
+- [ ] Create `PollTrigger` implementing `Trigger`
+- [ ] Create `FakeTrigger` implementing `Trigger` for tests
+- [ ] Periodically call `repository.discover_unprocessed()` at configured interval
+- [ ] Create `WatchdogTrigger` implementing `Trigger`
+- [ ] Use `watchdog` to monitor source paths, debounce, then call `discover_unprocessed()`
 - [ ] Emit discovered complete sources to pipeline
 
 ## 12. Pipeline orchestration
 - [ ] Create `pipeline.py`
+- [ ] Constructor receives dependencies: `LogRepository`, `StateStore`, `Embedder`, `OutputWriter`
 - [ ] Receive complete source IDs from trigger
 - [ ] For each source:
   1. `repository.read(source_id)` - get all records
@@ -92,11 +109,8 @@
 - [ ] `POST /recompute-projection` - trigger PCA refit, return `{"status": "ok", "record_count": int}`
 - [ ] If recompute requested during ingestion: queue until batch completes
 
-## 14. Application entrypoint
-- [ ] Create `main.py`
-- [ ] Load config
-- [ ] Init state DB
-- [ ] Instantiate repository from config
+## 14. Application entrypoint (runtime)
+- [ ] Add start/run logic to `main.py`
 - [ ] Start trigger (poll or watchdog)
 - [ ] Start pipeline in background
 - [ ] Start FastAPI server
