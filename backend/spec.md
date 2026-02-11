@@ -4,87 +4,104 @@
 
 Process LLM agent run logs into an embedding visualization dataset for Embedding Atlas.
 
-## 2. Ingestion
+## 2. Architecture
 
-### Log Repository
+The system has two distinct operations and three core components.
 
-The system ingests log data through a pluggable repository interface. Each
-repository handles a specific storage backend and implements the following
-contract:
+### Operations
 
-    class LogRepository(Protocol):
+**Load** -- pull new data from a source into the record store. Cheap,
+incremental, can run frequently.
 
-        def discover_unprocessed(self, processed: set[str]) -> list[str]:
-            """Find source IDs not yet processed."""
-            ...
+**Index** -- process accumulated records through the embedding and projection
+pipeline, produce output. Expensive (requires a heavy model), runs as a
+batch operation.
 
-        def is_complete(self, source_id: str) -> bool:
-            """Return True when the source is finished and ready for indexing."""
-            ...
+### Components
 
-        def read(self, source_id: str) -> list[Record]:
-            """Parse the entire source into Record objects (called once per source)."""
-            ...
+**DataSource** -- abstracts over where records come from. Handles discovery,
+completeness checking, format parsing. The caller just asks for new records
+and gets Records back. Implementations may read JSONL files, parquet files,
+database tables, or any other backend.
 
-A `Record` is the common output format for all repositories (see Data Model).
+**RecordStore** -- persists loaded Records between the load and index
+operations. Accumulates records across multiple load runs. Tracks which
+records have been indexed.
 
-### Behavior
-
-- When the system checks for new data, it should ask the repository for
-  unprocessed sources.
-- When a source is complete, the system should parse it in one pass and hand
-  the records to the pipeline.
-- When a source is not yet complete, the system should skip it and retry on
-  the next check.
-- When a source has already been processed, the system should skip it.
-- When the system restarts, it should know which sources were already
-  processed and skip them.
+**Indexer** -- takes unindexed records from the store, generates embeddings,
+projects to 2D, writes output. Operates in batch over all unindexed records.
 
 ### Triggering
 
-The system supports configurable triggers that decide *when* to check for
-new data:
+Triggers decide *when* to invoke an operation. They are orthogonal to the
+operations themselves -- neither the data source nor the indexer knows why
+it was invoked.
 
-- **Polling**: check at a regular interval.
-- **Event-driven**: react to external signals (e.g. filesystem events).
+Each operation has its own trigger. The natural trigger types differ:
 
-Both trigger modes use the same repository interface.
+**Load triggers** -- react to new data becoming available:
 
-## 3. Embedding
+- Explicit signal (CLI command, API call)
+- Filesystem watcher (new/changed files)
+- Database notification (new rows)
+- Polling (check at regular interval)
 
-- When new records are parsed, the system should generate vector embeddings
-  for each record's text field.
-- When the embedding service is unavailable, the system should retry with
-  backoff.
-- When a record fails to embed after retries, the system should log the
-  error and skip that record.
+**Index triggers** -- decide when to run the expensive batch operation:
 
-## 4. Projection
+- Explicit signal (CLI command, API call)
+- Threshold (N new unindexed records accumulated)
+- Schedule (e.g. nightly reindex)
 
-- When embeddings are generated for the first batch, the system should fit a
-  dimensionality reduction model and project all vectors to 2D.
-- When new embeddings arrive after the initial fit, the system should project
+The first implementation uses explicit signals for both.
+
+## 3. Loading
+
+### Behavior
+
+- When a load is triggered, the system asks the data source for new records.
+- The data source determines which sources are new, which are ready, and
+  reads them. All discovery, completeness, and format logic is internal to
+  the data source.
+- New records are persisted to the record store.
+- When a source has already been loaded, the data source skips it.
+- When the system restarts, it knows which sources were already loaded.
+
+## 4. Indexing
+
+### Embedding
+
+- When indexing is triggered, the system takes all unindexed records from
+  the record store.
+- For each record, the system generates a vector embedding of the text field.
+- When the embedding service is unavailable, the system retries with backoff.
+- When a record fails to embed after retries, the system logs the error and
+  skips that record.
+
+### Projection
+
+- When embeddings are generated for the first batch, the system fits a
+  dimensionality reduction model and projects all vectors to 2D.
+- When new embeddings arrive after the initial fit, the system projects
   them using the existing model.
-- When a recompute is requested via the API, the system should refit the
-  model on all stored embeddings and update all projections.
-- When a recompute is requested during active ingestion, the system should
-  queue it until the current batch completes.
+- When a recompute is requested, the system refits the model on all stored
+  embeddings and updates all projections.
 
-## 5. Output
+### Output
 
-- When a batch is processed, the system should atomically update the output
-  files so readers always see consistent data.
-- When the output is read by Atlas, it should contain all metadata, text, and
-  2D projections needed for visualization.
+- When indexing completes, the system atomically updates the output files
+  so readers always see consistent data.
+- The output contains all metadata, text, and 2D projections needed for
+  Atlas visualization.
 
-## 6. API
+## 5. API
 
-- `GET /health` -- return status indicating if the pipeline is running.
-- `POST /recompute-projection` -- trigger projection refit, return record count.
+- `GET /health` -- return status and whether indexing is in progress.
+- `POST /load` -- trigger a load operation.
+- `POST /index` -- trigger an indexing operation.
 
-## 7. Data Model
+## 6. Data Model
 
-### 7.1 Record (repository output)
+### 6.1 Record
 
 | Field              | Type       | Description                       |
 |--------------------|------------|-----------------------------------|
@@ -96,7 +113,7 @@ Both trigger modes use the same repository interface.
 | idx_in_iteration   | int        | Index within the iteration        |
 | type               | string     | Record classification             |
 
-### 7.2 Logs Output (Atlas input)
+### 6.2 Logs Output (Atlas input)
 
 | Column             | Type        |
 |--------------------|-------------|
@@ -110,29 +127,25 @@ Both trigger modes use the same repository interface.
 | projection_x       | float32     |
 | projection_y       | float32     |
 
-### 7.3 Embeddings Output
+### 6.3 Embeddings Output
 
 | Column   | Type              |
 |----------|-------------------|
 | id       | string            |
 | vector   | list<float32>     |
 
-### 7.4 State
+### 6.4 State
 
 The system persists:
 
-- Which sources have been processed (to avoid reprocessing on restart).
-- Pipeline counters (total records, projection fit state).
+- Which sources have been loaded (to avoid reloading on restart).
+- Which records have been indexed (to support incremental indexing).
+- Projection fit state (to decide fit vs transform).
 
-## 8. System Overview
+## 7. System Overview
 
-    Sources --> [Repository] --> Records --> [Embedder] --> Vectors
-                                                             |
-                                                             v
-                                               [Projector] --> 2D coords
-                                                             |
-                                                             v
-                                                       Output files
+    [Load Trigger] ----> Load:   [DataSource] --> [RecordStore]
+    [Index Trigger] ---> Index:  [RecordStore] --> [Embedder] --> [Projector] --> Output
 
-    [Trigger] periodically or on events invokes the repository.
-    API server provides health check and recompute trigger.
+    Triggers are orthogonal to operations.
+    API server exposes load, index, and health endpoints.
