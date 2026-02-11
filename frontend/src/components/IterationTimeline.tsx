@@ -17,20 +17,21 @@ export function IterationTimeline({
   onSelect,
 }: IterationTimelineProps) {
   return (
-    <ScrollArea className="w-full">
+    <ScrollArea className="w-full overflow-hidden">
       <div className="flex gap-2 p-2">
         {iterations.map((iter, i) => {
           const isSelected = i === selectedIteration;
           const isFinal = iter.final_answer !== null;
+          const hasError = iter.code_blocks.some((cb) => cb.result.stderr);
 
           return (
             <button
               key={i}
               onClick={() => onSelect(i)}
               className={cn(
-                "w-48 shrink-0 rounded-lg border p-3 text-left transition-all hover:border-primary/40",
+                "w-56 shrink-0 rounded-lg border p-3 text-left transition-all duration-150 hover:scale-[1.01] hover:border-primary/40",
                 isSelected
-                  ? "border-primary shadow-sm"
+                  ? "border-primary shadow-md"
                   : "border-border",
               )}
             >
@@ -40,9 +41,11 @@ export function IterationTimeline({
                     "flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold",
                     isSelected
                       ? "bg-primary text-primary-foreground"
-                      : isFinal
-                        ? "bg-emerald-500 text-white"
-                        : "bg-muted text-muted-foreground",
+                      : hasError
+                        ? "bg-red-500 text-white"
+                        : isFinal
+                          ? "bg-emerald-500 text-white"
+                          : "bg-muted text-muted-foreground",
                   )}
                 >
                   {iter.iteration}

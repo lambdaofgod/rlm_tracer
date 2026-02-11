@@ -12,6 +12,59 @@ import { CodeWithLineNumbers } from "./CodeWithLineNumbers";
 import { cn } from "@/lib/utils";
 import type { CodeBlock as CodeBlockType } from "@/lib/types";
 
+const COLLAPSE_THRESHOLD = 1024;
+
+function formatPythonRepr(val: unknown): string {
+  if (typeof val === "string") return val;
+  if (val === null) return "None";
+  if (val === undefined) return "None";
+  if (typeof val === "boolean") return val ? "True" : "False";
+  if (typeof val === "number") return String(val);
+  return JSON.stringify(val, null, 2);
+}
+
+function VariableRow({ name, value }: { name: string; value: unknown }) {
+  const formatted = formatPythonRepr(value);
+  const isLong = formatted.length > COLLAPSE_THRESHOLD;
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  return (
+    <div className="font-mono text-xs">
+      <div className="flex items-start gap-1">
+        <span className="shrink-0 text-sky-600 dark:text-sky-400">{name}</span>
+        <span className="shrink-0">=</span>
+        {!isLong ? (
+          <pre className="whitespace-pre-wrap text-amber-600 dark:text-amber-400">
+            {formatted}
+          </pre>
+        ) : (
+          <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
+            <CollapsibleTrigger className="flex items-center gap-1 text-left hover:opacity-80">
+              <ChevronRight
+                className={cn(
+                  "h-3 w-3 shrink-0 transition-transform",
+                  isExpanded && "rotate-90",
+                )}
+              />
+              <span className="truncate text-amber-600 dark:text-amber-400">
+                {formatted.slice(0, 80)}...
+              </span>
+              <Badge variant="outline" className="shrink-0 text-[9px]">
+                {formatted.length} chars
+              </Badge>
+            </CollapsibleTrigger>
+            <CollapsibleContent>
+              <pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap rounded-md bg-background/60 p-2 text-amber-600 dark:text-amber-400">
+                {formatted}
+              </pre>
+            </CollapsibleContent>
+          </Collapsible>
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface CodeBlockProps {
   block: CodeBlockType;
   index: number;
@@ -22,7 +75,7 @@ export function CodeBlock({ block, index }: CodeBlockProps) {
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className="rounded-lg border">
+      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5">
         <CollapsibleTrigger className="flex w-full items-center gap-2 p-3 text-left text-sm hover:bg-muted/50">
           <ChevronRight
             className={cn(
@@ -49,7 +102,7 @@ export function CodeBlock({ block, index }: CodeBlockProps) {
                 <div className="mb-1 text-[10px] font-medium uppercase text-muted-foreground">
                   stdout
                 </div>
-                <pre className="whitespace-pre-wrap rounded-lg bg-muted/30 p-2 font-mono text-xs">
+                <pre className="whitespace-pre-wrap rounded-lg bg-emerald-500/5 p-2 font-mono text-xs">
                   {block.result.stdout}
                 </pre>
               </div>
@@ -73,17 +126,9 @@ export function CodeBlock({ block, index }: CodeBlockProps) {
                 <div className="mb-1 text-[10px] font-medium uppercase text-muted-foreground">
                   variables
                 </div>
-                <div className="grid grid-cols-2 gap-1">
+                <div className="space-y-1">
                   {Object.entries(block.result.locals).map(([key, val]) => (
-                    <div key={key} className="font-mono text-xs">
-                      <span className="text-sky-600 dark:text-sky-400">
-                        {key}
-                      </span>{" "}
-                      ={" "}
-                      <span className="text-amber-600 dark:text-amber-400">
-                        {typeof val === "string" ? val : JSON.stringify(val)}
-                      </span>
-                    </div>
+                    <VariableRow key={key} name={key} value={val} />
                   ))}
                 </div>
               </div>
@@ -91,7 +136,7 @@ export function CodeBlock({ block, index }: CodeBlockProps) {
 
             {/* Sub-LM calls */}
             {block.result.rlm_calls.length > 0 && (
-              <div className="border-t p-3">
+              <div className="border-t bg-fuchsia-500/5 p-3">
                 <div className="mb-1 text-[10px] font-medium uppercase text-fuchsia-500">
                   sub-lm calls
                 </div>

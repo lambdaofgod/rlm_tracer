@@ -58,8 +58,8 @@ export function FileUploader({ onFileLoaded }: FileUploaderProps) {
       onDragLeave={() => setIsDragging(false)}
       onDrop={handleDrop}
       className={cn(
-        "flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-8 transition-colors",
-        isDragging ? "border-primary bg-primary/5" : "border-border",
+        "flex flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-8 transition-all duration-200",
+        isDragging ? "border-primary bg-primary/5 scale-[1.01]" : "border-border",
       )}
     >
       <Upload className="h-8 w-8 text-muted-foreground" />

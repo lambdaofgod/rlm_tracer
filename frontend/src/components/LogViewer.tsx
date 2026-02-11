@@ -7,7 +7,13 @@ import {
   ResizableHandle,
 } from "@/components/ui/resizable";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Repeat, Code, GitBranch, Clock } from "lucide-react";
+import { ArrowLeft, Repeat, Code, GitBranch, Clock, FileText, Check, ChevronRight } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
 import { IterationTimeline } from "./IterationTimeline";
 import { TrajectoryPanel } from "./TrajectoryPanel";
 import { ExecutionPanel } from "./ExecutionPanel";
@@ -28,8 +34,11 @@ function formatAnswer(answer: string | [string, string] | null): string {
 
 export function LogViewer({ logFile, onBack }: LogViewerProps) {
   const [selectedIteration, setSelectedIteration] = useState(0);
+  const [answerOpen, setAnswerOpen] = useState(true);
 
   const currentIteration = logFile.iterations[selectedIteration];
+  const lastIter = logFile.iterations[logFile.iterations.length - 1];
+  const finalAnswer = lastIter?.final_answer ?? null;
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -106,11 +115,34 @@ export function LogViewer({ logFile, onBack }: LogViewerProps) {
           {logFile.metadata.contextQuestion.length > 120 && "..."}
         </div>
       )}
-      {logFile.metadata.finalAnswer && (
-        <div className="px-3 pb-2 text-sm">
-          <span className="text-muted-foreground">A: </span>
-          {formatAnswer(logFile.metadata.finalAnswer)}
-        </div>
+
+      {/* Final answer strip */}
+      {finalAnswer && (
+        <Collapsible open={answerOpen} onOpenChange={setAnswerOpen}>
+          <CollapsibleTrigger className="flex w-full items-center gap-2 border-y border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-left text-sm hover:bg-emerald-500/10">
+            <ChevronRight
+              className={cn(
+                "h-4 w-4 text-emerald-600 transition-transform dark:text-emerald-400",
+                answerOpen && "rotate-90",
+              )}
+            />
+            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600">
+              <Check className="h-3 w-3 text-white" />
+            </div>
+            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              Final Answer
+            </span>
+            <span className="ml-2 truncate font-mono text-xs text-muted-foreground">
+              {formatAnswer(finalAnswer).slice(0, 80)}
+              {formatAnswer(finalAnswer).length > 80 && "..."}
+            </span>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <pre className="max-h-[75vh] overflow-auto border-b border-emerald-500/30 bg-emerald-500/5 px-3 py-2 font-mono text-xs whitespace-pre-wrap">
+              {formatAnswer(finalAnswer)}
+            </pre>
+          </CollapsibleContent>
+        </Collapsible>
       )}
 
       {/* Timeline */}
@@ -123,23 +155,32 @@ export function LogViewer({ logFile, onBack }: LogViewerProps) {
       </div>
 
       {/* Main content: resizable split */}
-      <div className="min-h-0 flex-1">
-        <ResizablePanelGroup orientation="horizontal">
+      <div className="min-h-0 flex-1 overflow-hidden">
+        <ResizablePanelGroup orientation="horizontal" className="h-full">
           <ResizablePanel defaultSize={50} minSize={20}>
-            <TrajectoryPanel
-              iterations={logFile.iterations}
-              selectedIteration={selectedIteration}
-            />
+            <div className="h-full overflow-hidden">
+              <TrajectoryPanel
+                iterations={logFile.iterations}
+                selectedIteration={selectedIteration}
+              />
+            </div>
           </ResizablePanel>
           <ResizableHandle withHandle />
           <ResizablePanel defaultSize={50} minSize={20}>
-            {currentIteration ? (
-              <ExecutionPanel iteration={currentIteration} />
-            ) : (
-              <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                No iteration selected
-              </div>
-            )}
+            <div className="h-full overflow-hidden">
+              {currentIteration ? (
+                <ExecutionPanel iteration={currentIteration} />
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <div className="rounded-lg border-2 border-dashed border-border/50 p-8 text-center">
+                    <div className="mb-2 inline-block rounded-lg bg-muted/50 p-2">
+                      <FileText className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">No iteration selected</p>
+                  </div>
+                </div>
+              )}
+            </div>
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>

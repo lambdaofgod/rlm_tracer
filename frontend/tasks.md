@@ -34,17 +34,49 @@
 
 ## Phase 5: Integration test
 
-- [ ] 5.1 TEST (`bun test`): end-to-end flow test -- render Dashboard, simulate file upload with fixture, verify LogViewer appears, verify iteration navigation works
+- [x] 5.1 TEST (`bun test`): end-to-end flow test -- render Dashboard, simulate file upload with fixture, verify LogViewer appears, verify iteration navigation works
 
 Test runner: `bun test` (built-in, native TypeScript). Will need `@happy-dom/global-registrator` or similar for DOM APIs in component tests.
 
 ## Phase 6: Design language and styling
 
-- [ ] 6.1 Tinted cards, gradient icon squares, message card styling
-- [ ] 6.2 Highlighted response card, final answer card, empty states
-- [ ] 6.3 Iteration timeline visual polish (color-coded circles, badges, selected state)
-- [ ] 6.4 Dashboard background (grid pattern, blurred radial gradients)
-- [ ] 6.5 Syntax highlighting OKLCH token colors
+- [x] 6.1 Tinted cards, gradient icon squares, message card styling
+- [x] 6.2 Highlighted response card, final answer card, empty states
+- [x] 6.3 Iteration timeline visual polish (color-coded circles, badges, selected state)
+- [x] 6.4 Dashboard background (grid pattern, blurred radial gradients)
+- [x] 6.5 Syntax highlighting OKLCH token colors
+
+## Phase 6b: Layout bug fixes
+
+BUG: When loading a real JSONL log where the final answer is large, the final
+answer card (rendered inside TrajectoryPanel's ScrollArea) overflows the resizable
+panel and covers the entire viewport. The final answer renders on top of other
+components, hiding header, stats, timeline, execution panel, and footer.
+
+Root causes:
+1. The final answer card lives inside TrajectoryPanel's ScrollArea alongside
+   iteration responses. When the answer is huge, it blows out the scroll container.
+2. The flex/height chain from h-screen down to ScrollArea has gaps where overflow
+   is not constrained, allowing content to expand instead of scroll.
+
+- [x] 6b.1 Extract final answer into a separate collapsible strip in LogViewer (between Q/A summary and timeline), outside TrajectoryPanel's scroll area
+- [x] 6b.2 Fix the height/overflow chain in LogViewer: add overflow-hidden wrappers on ResizablePanel contents
+- [x] 6b.3 Cap individual content blocks: add max-h-96 + overflow-auto on `<pre>` elements in TrajectoryPanel (MessageCard and LM responses)
+- [x] 6b.4 Code formatting in TrajectoryPanel: parse fenced code blocks in LM responses and render with SyntaxHighlight instead of plain `<pre>`
+- [ ] 6b.5 TEST: verify with a real large log file that all panels remain visible and scroll correctly
+
+BUG: Variable values in CodeBlock are rendered as raw text with no formatting or
+truncation. Long values (e.g. full HTML page in `webpage_content`) spill across
+the 2-column grid and are unreadable.
+
+- [x] 6b.6 Python-format variable values in CodeBlock: use SyntaxHighlight or styled `<pre>` with Python repr formatting instead of raw text
+- [x] 6b.7 Collapsible long variable values: values > 1024 chars should be collapsed by default with a click-to-expand toggle
+
+BUG: IterationTimeline horizontal scroll doesn't work. The ScrollArea renders all
+cards in a flex row but the horizontal scrollbar has no effect -- only cards that
+fit the viewport width are visible (e.g. 9 out of 15).
+
+- [x] 6b.8 Fix IterationTimeline horizontal scroll: add `overflow-hidden` or width constraint on the parent wrapper so ScrollArea engages horizontal scrolling
 
 ## Phase 7: Features
 

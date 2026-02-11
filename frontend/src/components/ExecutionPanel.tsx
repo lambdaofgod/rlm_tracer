@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Code, GitBranch } from "lucide-react";
 import { CodeBlock } from "./CodeBlock";
 import type { RLMIteration, RLMChatCompletion } from "@/lib/types";
 
@@ -45,8 +46,13 @@ export function ExecutionPanel({ iteration }: ExecutionPanelProps) {
         <ScrollArea className="h-full">
           <div className="space-y-3 p-3">
             {iteration.code_blocks.length === 0 ? (
-              <div className="text-center text-sm text-muted-foreground">
-                No code blocks in this iteration
+              <div className="flex h-full items-center justify-center">
+                <div className="rounded-lg border-2 border-dashed border-border/50 p-8 text-center">
+                  <div className="mb-2 inline-block rounded-lg bg-muted/50 p-2">
+                    <Code className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">No code blocks in this iteration</p>
+                </div>
               </div>
             ) : (
               iteration.code_blocks.map((block, i) => (
@@ -61,14 +67,19 @@ export function ExecutionPanel({ iteration }: ExecutionPanelProps) {
         <ScrollArea className="h-full">
           <div className="space-y-3 p-3">
             {allRlmCalls.length === 0 ? (
-              <div className="text-center text-sm text-muted-foreground">
-                No sub-LM calls in this iteration
+              <div className="flex h-full items-center justify-center">
+                <div className="rounded-lg border-2 border-dashed border-border/50 p-8 text-center">
+                  <div className="mb-2 inline-block rounded-lg bg-muted/50 p-2">
+                    <GitBranch className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">No sub-LM calls in this iteration</p>
+                </div>
               </div>
             ) : (
               allRlmCalls.map((call, i) => (
                 <div
                   key={i}
-                  className="rounded-lg border border-fuchsia-500/20 p-3 text-sm"
+                  className="rounded-lg border border-fuchsia-500/20 bg-fuchsia-500/5 p-3 text-sm"
                 >
                   <div className="flex items-center gap-2">
                     <Badge variant="outline">{call.model}</Badge>

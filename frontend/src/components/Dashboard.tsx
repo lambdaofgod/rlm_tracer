@@ -46,9 +46,13 @@ export function Dashboard() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="dashboard-bg relative flex min-h-screen flex-col overflow-hidden">
+      {/* Background gradient blobs */}
+      <div className="pointer-events-none absolute top-1/4 left-1/4 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
+      <div className="pointer-events-none absolute right-1/4 bottom-1/4 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl" />
+
       {/* Header */}
-      <div className="flex items-center border-b p-4">
+      <div className="relative z-10 flex items-center border-b bg-background/80 p-4 backdrop-blur-sm">
         <h1 className="text-xl font-bold">RLM Visualizer</h1>
         <div className="ml-auto">
           <ThemeToggle />
@@ -56,7 +60,7 @@ export function Dashboard() {
       </div>
 
       {/* Body */}
-      <div className="flex-1 p-4">
+      <div className="relative z-10 flex-1 p-4">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Left column */}
           <div className="space-y-6">
@@ -128,7 +132,7 @@ export function Dashboard() {
       </div>
 
       {/* Footer */}
-      <div className="border-t p-4 text-xs text-muted-foreground">
+      <div className="relative z-10 border-t bg-background/80 p-4 text-xs text-muted-foreground backdrop-blur-sm">
         RLM Visualizer - Recursive Language Models
       </div>
     </div>

@@ -3,11 +3,11 @@
 import { cn } from "@/lib/utils";
 
 const variantClasses: Record<string, string> = {
-  cyan: "border-cyan-500/30",
-  green: "border-emerald-500/30",
-  magenta: "border-fuchsia-500/30",
-  yellow: "border-amber-500/30",
-  red: "border-red-500/30",
+  cyan: "border-cyan-500/30 bg-cyan-500/5",
+  green: "border-emerald-500/30 bg-emerald-500/5",
+  magenta: "border-fuchsia-500/30 bg-fuchsia-500/5",
+  yellow: "border-amber-500/30 bg-amber-500/5",
+  red: "border-red-500/30 bg-red-500/5",
 };
 
 interface StatsCardProps {
